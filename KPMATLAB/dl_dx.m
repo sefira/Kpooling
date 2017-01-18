@@ -1,7 +1,7 @@
-function [code,mangrad,numgrad] = dl_dx(varargin)
-% Output the final encode result
-% Compute the number gradient and manual gradient 
-% to compare these, if equal, then porve derivation formula is right
+function [output,mangrad,numgrad] = dl_dx(varargin)
+% Output the final output
+% Compute the manual gradient and number gradient to compare them
+% if they are equal, then the derivation formula should be right
     global x;
     global y;
     global sigma;
@@ -12,26 +12,28 @@ function [code,mangrad,numgrad] = dl_dx(varargin)
     else
         x = rand(5,1);
         y = rand(5,1);
-        % x = [0.2511;
-        %     0.6160;
-        %     0.4733;
-        %     0.3517];
-        % y = [0.2511;
-        %     0.6160;
-        %     0.4733;
-        %     0.3517];
-        sigma = 3;
+        % x = [0.6476;
+        %     0.6790;
+        %     0.6358;
+        %     0.9452;
+        %     0.2089];
+        % y = [0.7093;
+        %     0.2362;
+        %     0.1194;
+        %     0.6073;
+        %     0.4501];
+        sigma = 10;
     end
-    % code
-    [code,~] = forward(x,y,sigma);
+    % output
+    [output,~] = forward(x,y,sigma);
    
     % number gradient
     n = size(x,1);
+    numgrad = zeros(n,1);
     EPSILON=1e-6;
     % gradient of x or y
-    needxory = 'y';
+    needxory = 'x';
     if(needxory == 'x')
-        numgrad = zeros(1,size(x,1));
         for i=1:n
             d=zeros(n,1);
             d(i) = EPSILON;
@@ -40,7 +42,6 @@ function [code,mangrad,numgrad] = dl_dx(varargin)
             numgrad(i) = (a-b)/EPSILON;
         end
     else
-        numgrad = zeros(size(x,1),1);
         for i=1:n
             d=zeros(n,1);
             d(i) = EPSILON;
@@ -53,29 +54,32 @@ function [code,mangrad,numgrad] = dl_dx(varargin)
     mangrad = backward(x,y,sigma,needxory);
 end
 
-function [bilinear,loss] = forward(x,y,sigma)
+function [RBF,loss] = forward(x,y,sigma)
 % Origin mapping function
-    % bilinear forward
-    bilinear = x'*y;
-    % f:loss: mean square loss, suppose target equal zeros
-    loss = lossfunction(bilinear);
+    dist = x-y;
+    dist = dist'*dist;
+    dist = -dist / (2*(sigma^2));
+    RBF = exp(dist);
+    % MSE loss, suppose target equals zeros
+    loss = lossfunction(RBF);
 end
 
-function loss = lossfunction(c)
-    loss = (1/2)*(sum(c.^2));
+function loss = lossfunction(x)
+    loss = (1/2)*(x'*x);
 end
 
 function mangrad = backward(x,y,sigma,needxory)
-    bilinear = forward(x,y,sigma);
-    mangrad_l_f = l_f(bilinear);
+    output = forward(x,y,sigma);
+    mangrad_l_f = l_f(output);
+    output = output / (-sigma^2);
     if(needxory == 'x')
-        mangrad = mangrad_l_f*y';        
+        mangrad = mangrad_l_f*output*(x-y);
     else
-        mangrad = mangrad_l_f*x;
+        mangrad = mangrad_l_f*output*(y-x);
     end
 end
 
 % the loss function
-function mangrad = l_f(c)
-    mangrad = c;
+function mangrad = l_f(x)
+    mangrad = x;
 end

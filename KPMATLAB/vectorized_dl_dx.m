@@ -85,8 +85,9 @@ function mangrad = backwardmat(x,y,sigma)
     mangrad_l_f = mangrad_l_f.*output;
     mangrad_l_f = mangrad_l_f / (-2*sigma^2);
     m_ones = ones(size(x,2),size(x,1));
-    item1 = 2*m_ones*mangrad_l_f'.*x';
-    item2 = 2*y'*mangrad_l_f';
+    m_ones
+    item1 = 2*m_ones*mangrad_l_f.*x';
+    item2 = 2*y'*mangrad_l_f;
     mangrad(:,:,1) = (item1-item2)';
     item1 = 2*m_ones*mangrad_l_f.*y';
     item2 = 2*x'*mangrad_l_f;

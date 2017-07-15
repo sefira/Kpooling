@@ -1,4 +1,4 @@
-function [output,mangrad,numgrad] = matdl_dx(varargin)
+function [output,matgrad,mangrad,numgrad] = mat(varargin)
 % Output the final output
 % Compute the manual gradient and number gradient to compare them
 % if they are equal, then the derivation formula should be right
@@ -14,15 +14,12 @@ function [output,mangrad,numgrad] = matdl_dx(varargin)
         y = x;
         sigma = 10;
     end
-    % output
     [output,~] = forward(x,y,sigma);
    
-    % number gradient
     n = size(x,1);
     m = size(x,2);
     numgrad = zeros(n,m,2);
     EPSILON=1e-6;
-    % gradient of x or y
     for i=1:n
         for j=1:m
             d=zeros(n,m);
@@ -43,29 +40,23 @@ function [output,mangrad,numgrad] = matdl_dx(varargin)
             numgrad(i,j,2) = (a-b)/EPSILON;
         end
     end
-    % manual gradient, computed by derivation
     mangrad = backward(x,y,sigma);
+    matgrad = backwardmat(x,y,sigma);
 end
 
 function [KMat,loss] = forward(x,y,sigma)
-% Origin mapping function
-    n = size(x,1);
-    KMat = zeros(n,n);
-    for i=1:n
-        for j=1:n
-            dist = x(i,:)-y(j,:);
-            dist = dist*dist';
-            dist = -dist / (2*(sigma^2));
-            KMat(i,j) = dist;
-        end
-    end
-    KMat = exp(KMat);
-    % MSE loss, suppose target equals zeros
+    m_ones = ones(size(x,2),size(x,1));
+    KMat = (x.*x*m_ones+(y.*y*m_ones)'-2*x*y');
+    KMat = exp(KMat / (-2*(sigma^2)));
     loss = lossfunction(KMat);
 end
 
 function loss = lossfunction(x)
     loss = sum(sum((1/2)*(x.^2)));
+end
+
+function mangrad = l_f(x)
+    mangrad = x;
 end
 
 function mangrad = backward(x,y,sigma)
@@ -79,12 +70,25 @@ function mangrad = backward(x,y,sigma)
         for j=1:n
             mangrad(i,:,1) = mangrad(i,:,1) + mangrad_l_f(i,j)*output(i,j)*(x(i,:)-y(j,:));
             mangrad(j,:,2) = mangrad(j,:,2) + mangrad_l_f(i,j)*output(i,j)*(y(j,:)-x(i,:));
-            %mangrad(i,:,2) = mangrad(i,:,2) + mangrad_l_f(i,j)*output(i,j)*(y(i,:)-x(j,:));
+%             mangrad(i,:,1) = mangrad(i,:,1) + 2*mangrad_l_f(i,j)*(x(i,:)-y(j,:));
+%             mangrad(j,:,2) = mangrad(j,:,2) + 2*mangrad_l_f(i,j)*(y(j,:)-x(i,:));
         end
     end
 end
 
-% the loss function
-function mangrad = l_f(x)
-    mangrad = x;
+function mangrad = backwardmat(x,y,sigma)
+    [output,~] = forward(x,y,sigma);
+    mangrad_l_f = l_f(output);
+    n = size(x,1);
+    m = size(x,2);
+    mangrad = zeros(n,m,2);
+    mangrad_l_f = mangrad_l_f.*output;
+    mangrad_l_f = mangrad_l_f / (-2*sigma^2);
+    m_ones = ones(size(x,2),size(x,1));
+    item1 = 2*m_ones*mangrad_l_f'.*x';
+    item2 = 2*y'*mangrad_l_f';
+    mangrad(:,:,1) = (item1-item2)';
+    item1 = 2*m_ones*mangrad_l_f.*y';
+    item2 = 2*x'*mangrad_l_f;
+    mangrad(:,:,2) = (item1-item2)';
 end

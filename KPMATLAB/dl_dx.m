@@ -11,17 +11,17 @@ function [output,mangrad,numgrad] = dl_dx(varargin)
         sigma = varargin{3};
     else
         x = rand(5,1);
-        y = rand(5,1);
-        % x = [0.6476;
-        %     0.6790;
-        %     0.6358;
-        %     0.9452;
-        %     0.2089];
-        % y = [0.7093;
-        %     0.2362;
-        %     0.1194;
-        %     0.6073;
-        %     0.4501];
+        y = x;
+%         x = [0.6476;
+%             0.6790;
+%             0.6358;
+%             0.9452;
+%             0.2089];
+%         y = [0.6476;
+%             0.6790;
+%             0.6358;
+%             0.9452;
+%             0.2089];
         sigma = 10;
     end
     % output
@@ -59,7 +59,7 @@ function [RBF,loss] = forward(x,y,sigma)
     dist = x-y;
     dist = dist'*dist;
     dist = -dist / (2*(sigma^2));
-    RBF = exp(dist);
+    RBF = exp(dist)
     % MSE loss, suppose target equals zeros
     loss = lossfunction(RBF);
 end
